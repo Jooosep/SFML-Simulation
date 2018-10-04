@@ -63,7 +63,7 @@ int numberOfNeighbors(sf::Vector2f * center, std::vector<struct Fuel> * neighbor
 	int n = 0;
 	for (auto& v : *neighbors)
 	{
-		if (sqrt(pow(abs(v.pos.x - center->x), 2) + pow(abs(v.pos.y - center->y), 2)) < 10.f)
+		if (sqrt(pow(abs(v.pos.x - center->x), 2) + pow(abs(v.pos.y - center->y), 2)) < 2.f)
 			n++;
 	}
 	return n;
@@ -385,12 +385,13 @@ int main()
 
 			y += rand() % 2 - 1;
 			x += rand() % 2 - 1;
-			if (flameDelay.getElapsedTime().asMicroseconds() > 2)
+			float offset = 0.05;
+			if (flameDelay.getElapsedTime().asMicroseconds() > 2000)
 			{
 				flameDelay.restart();
 				for (int i = 0; i < 3; i++)
 				{
-					sf::Vector2f direction = sf::Vector2f(std::cos(characterAngle + 0.1 - i * 0.1) * 5, std::sin(characterAngle + 0.1 - i * 0.1) * 5);
+					sf::Vector2f direction = sf::Vector2f(std::cos(characterAngle + offset - i * offset) * 5, std::sin(characterAngle + offset - i * offset) * 5);
 					fuelVector.emplace_back(sf::Vector2f(centerX, centerY) + direction, direction);
 				}
 			}
@@ -478,20 +479,22 @@ int main()
 			else
 			{
 				sf::Transform t;
-				f.spread += 0.03;
+				f.spread += 0.1;
 				if (f.spread > 1.0)
 				{
 					f.spread = 0.0;
-					float offset = (rand() % 3 - 1) * 0.1;
-					fuelSpreadVector.emplace_back(f.pos, sf::Vector2f(std::cos(std::acos(f.dir.x) + 10.1), std::sin(std::asin(f.dir.y) + 10.1)), 0.5, 0.0, 1.0, f.force, f.forceMultiplier);
+					float offset = (rand() % 3 - 1) * 0.15;
+					float angle = std::atan(f.dir.y / f.dir.x);
+					fuelSpreadVector.emplace_back(f.pos, sf::Vector2f(std::cos(angle + offset), std::sin(angle + offset)), 0.2, 0.0, 1.0, f.force, f.forceMultiplier);
 				}
 				t.translate(f.pos.x, f.pos.y);
 				f.pos += sf::Vector2f(f.dir.x * f.force * 0.5, f.dir.y * f.force * 0.5);
 				f.force *= f.forceMultiplier;
 				f.forceMultiplier *= 0.9999;
-				f.material -= 0.01;
+				f.material -= 0.015;
 				auto n = numberOfNeighbors(&f.pos, &fuelVector) - 1;
-				fuelParticle.setFillColor(sf::Color(242, 200 - (20 * n), 0));
+
+				fuelParticle.setFillColor(sf::Color(242, 200 - ((20 * n > 200) ? 200 : 20 * n), 0));
 				float r = n * f.material / 2.f;
 				t.scale(3, 3);
 				window.draw(fuelParticle, t);
